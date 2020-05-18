@@ -116,3 +116,48 @@ title("Estimated Daniel Speech")
 xlabel("Time (s)")
 grid on
 
+%sound(speech1, Fs)
+%sound(speech2, Fs)
+%sound(speech1_Hard, Fs)
+%sound(speech2_Hard, Fs)
+
+%% Source separation using soft masks
+
+softMask = abs(P_danilo) ./ (abs(P_daniel) + abs(P_danilo) + eps);
+
+P_danilo_Soft = P_mix .* softMask;
+P_daniel_Soft = P_mix .* (1-softMask);
+
+speech1_Soft = istft(P_danilo_Soft, win, synth_win, OverlapLength, FFTLength, Fs);
+speech2_Soft = istft(P_daniel_Soft, win, synth_win, OverlapLength, FFTLength, Fs);
+
+figure(5)
+subplot(2,2,1)
+plot(t, speech1)
+axis([t(1) t(end) -1 1])
+title("Original Danilo Speech")
+grid on
+
+subplot(2,2,3)
+plot(speech1_Soft)
+axis([t(1) t(end) -1 1])
+xlabel("Time (s)")
+title("Estimated Danilo Speech")
+grid on
+
+subplot(2,2,2)
+plot(t, speech2)
+axis([t(1) t(end) -1 1])
+title("Original Daniel Speech")
+grid on
+
+subplot(2,2,4)
+plot(speech2_Soft)
+axis([t(1) t(end) -1 1])
+title("Estimated Daniel Speech")
+xlabel("Time (s)")
+grid on
+
+sound(speech1_Soft, Fs)
+sound(speech2_Soft, Fs)
+
