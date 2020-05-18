@@ -3,13 +3,12 @@ clear all
 %% Loading signals
 Fs = 48000;
 M1 = load("../../data/indoor_speech.mat");
-speech1 = M1.data.channel_1(:,2);
+speech1 = M1.data.channel_1(:,2); % Danilo speech
 %sound(2*speech1,Fs)
 
-M2 = csvread("../../data/traffic_speech.csv");
+M2 = csvread("../../data/traffic_speech.csv"); % Luan speech
 speech2 = M2(:,2);
 %sound(2*speech2,Fs)
-
 
 %% Mixing signals
 speech1 = speech1/norm(speech1);
@@ -22,7 +21,6 @@ mix = mix ./ max(abs(mix));
 
 t = (0 : numel(mix)-1*(1/Fs));
 
-
 figure(1)
 subplot(3,1,1)
 plot(t,speech1)
@@ -30,7 +28,7 @@ title("Danilo Speech")
 grid on
 subplot(3,1,2)
 plot(t,speech2)
-title("Daniel Speech")
+title("Luan Speech")
 grid on
 subplot(3,1,3)
 plot(t,mix)
@@ -58,7 +56,7 @@ subplot(3,1,2)
 %stft(speech2,Fs,'Window',win,'OverlapLength',OverlapLength,'FFTLength',FFTLength)
 %R2020 version
 spectrogram(speech2, win, OverlapLength, FFTLength, Fs, 'yaxis');
-title("Daniel Speech")
+title("Luan Speech")
 subplot(3,1,3)
 %stft(mix,Fs,'Window',win,'OverlapLength',OverlapLength,'FFTLength',FFTLength)
 %R2020 version
@@ -71,21 +69,21 @@ title("Mixed Speech")
 %[~,f,t,P_danilo] = spectrogram(speech1, win, OverlapLength, FFTLength, Fs);
 P_danilo = stft(speech1, win, OverlapLength, FFTLength, Fs);
 %P_daniel        = spectrogram(speech2, win, OverlapLength, FFTLength, Fs);
-P_daniel = stft(speech2, win, OverlapLength, FFTLength, Fs);
+P_luan = stft(speech2, win, OverlapLength, FFTLength, Fs);
 %[P_mix,F]  = spectrogram(mix, win, OverlapLength, FFTLength, Fs);
 [P_mix,F]  = stft(mix, win, OverlapLength, FFTLength, Fs);
-binaryMask = abs(P_danilo) >= abs(P_daniel);
+binaryMask = abs(P_danilo) >= abs(P_luan);
 
 %figure(3)
 %plotMask(binaryMask, WindowLength - OverlapLength, F, Fs)
 
 P_danilo_Hard = P_mix .* binaryMask;
-P_daniel_Hard = P_mix .* (1-binaryMask);
+P_luan_Hard = P_mix .* (1-binaryMask);
 
 %speech1_Hard = ifft(P_danilo_Hard);
 speech1_Hard = istft(P_danilo_Hard , win, synth_win, OverlapLength, FFTLength, Fs);
 %speech2_Hard = ifft(P_daniel_Hard);
-speech2_Hard = istft(P_daniel_Hard , win, synth_win, OverlapLength, FFTLength, Fs);
+speech2_Hard = istft(P_luan_Hard , win, synth_win, OverlapLength, FFTLength, Fs);
 
 figure(4)
 subplot(2,2,1)
@@ -105,14 +103,14 @@ grid on
 subplot(2,2,2)
 plot(t, speech2)
 axis([t(1) t(end) -1 1])
-title("Original Daniel Speech")
+title("Original Luan Speech")
 grid on
 
 subplot(2,2,4)
 %plot(t, speech2_Hard)
 plot(speech2_Hard)
 axis([t(1) t(end) -1 1])
-title("Estimated Daniel Speech")
+title("Estimated Luan Speech")
 xlabel("Time (s)")
 grid on
 
@@ -123,13 +121,13 @@ grid on
 
 %% Source separation using soft masks
 
-softMask = abs(P_danilo) ./ (abs(P_daniel) + abs(P_danilo) + eps);
+softMask = abs(P_danilo) ./ (abs(P_luan) + abs(P_danilo) + eps);
 
 P_danilo_Soft = P_mix .* softMask;
-P_daniel_Soft = P_mix .* (1-softMask);
+P_luan_Soft = P_mix .* (1-softMask);
 
 speech1_Soft = istft(P_danilo_Soft, win, synth_win, OverlapLength, FFTLength, Fs);
-speech2_Soft = istft(P_daniel_Soft, win, synth_win, OverlapLength, FFTLength, Fs);
+speech2_Soft = istft(P_luan_Soft, win, synth_win, OverlapLength, FFTLength, Fs);
 
 figure(5)
 subplot(2,2,1)
@@ -148,16 +146,15 @@ grid on
 subplot(2,2,2)
 plot(t, speech2)
 axis([t(1) t(end) -1 1])
-title("Original Daniel Speech")
+title("Original Luan Speech")
 grid on
 
 subplot(2,2,4)
 plot(speech2_Soft)
 axis([t(1) t(end) -1 1])
-title("Estimated Daniel Speech")
+title("Estimated Luan Speech")
 xlabel("Time (s)")
 grid on
 
-sound(speech1_Soft, Fs)
-sound(speech2_Soft, Fs)
-
+%sound(speech1_Soft, Fs)
+%sound(speech2_Soft, Fs)
