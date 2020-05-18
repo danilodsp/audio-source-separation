@@ -42,10 +42,11 @@ grid on
 
 %% Time-Frequency Analysis
 
-WindowLength  = 128;
-FFTLength     = 128;
-OverlapLength = 96;
+WindowLength  = 1024;
+FFTLength     = 1024;
+OverlapLength = 1024/8;
 win           = hann(WindowLength,"periodic");
+synth_win     = hamming(WindowLength, 'periodic');
 
 figure(2)
 subplot(3,1,1)
@@ -64,4 +65,54 @@ subplot(3,1,3)
 spectrogram(mix, win, OverlapLength, FFTLength, Fs, 'yaxis');
 title("Mixed Speech")
 
+
+%% Source separation using binary masks (ideal case)
+
+%[~,f,t,P_danilo] = spectrogram(speech1, win, OverlapLength, FFTLength, Fs);
+P_danilo = stft(speech1, win, OverlapLength, FFTLength, Fs);
+%P_daniel        = spectrogram(speech2, win, OverlapLength, FFTLength, Fs);
+P_daniel = stft(speech2, win, OverlapLength, FFTLength, Fs);
+%[P_mix,F]  = spectrogram(mix, win, OverlapLength, FFTLength, Fs);
+[P_mix,F]  = stft(mix, win, OverlapLength, FFTLength, Fs);
+binaryMask = abs(P_danilo) >= abs(P_daniel);
+
+%figure(3)
+%plotMask(binaryMask, WindowLength - OverlapLength, F, Fs)
+
+P_danilo_Hard = P_mix .* binaryMask;
+P_daniel_Hard = P_mix .* (1-binaryMask);
+
+%speech1_Hard = ifft(P_danilo_Hard);
+speech1_Hard = istft(P_danilo_Hard , win, synth_win, OverlapLength, FFTLength, Fs);
+%speech2_Hard = ifft(P_daniel_Hard);
+speech2_Hard = istft(P_daniel_Hard , win, synth_win, OverlapLength, FFTLength, Fs);
+
+figure(4)
+subplot(2,2,1)
+plot(t, speech1)
+axis([t(1) t(end) -1 1])
+title("Original Danilo Speech")
+grid on
+
+subplot(2,2,3)
+%plot(t, speech1_Hard)
+plot(speech1_Hard)
+axis([t(1) t(end) -1 1])
+xlabel("Time (s)")
+title("Estimated Danilo Speech")
+grid on
+
+subplot(2,2,2)
+plot(t, speech2)
+axis([t(1) t(end) -1 1])
+title("Original Daniel Speech")
+grid on
+
+subplot(2,2,4)
+%plot(t, speech2_Hard)
+plot(speech2_Hard)
+axis([t(1) t(end) -1 1])
+title("Estimated Daniel Speech")
+xlabel("Time (s)")
+grid on
 
